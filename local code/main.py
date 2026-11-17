@@ -1227,7 +1227,7 @@ class Page:
         titleSize = Draw.getSize(title)
         Draw.insert(
             int((GlobalFrame.size[0] - titleSize[0]) / 2),
-            (GlobalFrame.size[1] - 10),
+            (GlobalFrame.size[1] - 11),
             title,
             GlobalFrame.screen,
         )
@@ -1238,7 +1238,7 @@ class Page:
         subtitleSize = Draw.getSize(subtitle)
         Draw.insert(
             int((GlobalFrame.size[0] - subtitleSize[0]) / 2),
-            (GlobalFrame.size[1] - 14),
+            (GlobalFrame.size[1] - 15),
             subtitle,
             GlobalFrame.screen,
         )
