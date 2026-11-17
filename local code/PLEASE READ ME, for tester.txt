@@ -1,0 +1,17 @@
+Hi hi, Sol here, please try out our code, 
+I made this humble code by pure love and passion with no use of vibe coding
+
+the code has been tested in windows 10 with flawless experience,
+designed to work on other platforms though have not been tested
+
+I recommend using this command in the terminal for full screen experience:
+
+> start py main.py
+
+this will create a new window which you may play around with and resize however you like, 
+do try pressing f11 for full screen!!!
+and be ware, we have not coded a crash prevention system, if you resize the window to be too small,
+it will crash!! 
+
+and if you just want to try it in other terminal you may simply run:
+py main.py
