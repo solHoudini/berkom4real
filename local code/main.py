@@ -6,13 +6,7 @@ import subprocess
 import time
 import sys
 import ast
-
-
-# global variables:
-class GlobalFrame:
-    size = [40, 40]
-    screen = []  # globalFrame.text[X][Y]
-
+from multiprocessing.connection import Listener
 
 MAX_FPS = 120
 FRAMELENGTH = 40
@@ -135,7 +129,7 @@ class history:
     #     'goal': ''
     # }]
     def report():
-        Frame.clear()
+        GlobalFrame.clear()
         print(history.log)
         time.sleep(5)
 
@@ -148,6 +142,68 @@ class history:
         with open("log.txt", "w", encoding="utf-8") as file:
             file.write(str(history.log))
 
+
+# global variables:
+class GlobalFrame:
+    size = [-40, -40]
+    screen = []  # globalFrame.text[X][Y]
+    # frame system:
+    def update():
+        Page.update()
+
+    def clear():
+        # Determine the correct command based on OS ('cls' for Windows, 'clear' for Linux/macOS)
+        command = "cls" if os.name == "nt" else "clear"
+        # Run the command safely without a manual shell wrapper
+        subprocess.run([command], shell=True)
+        GlobalFrame.removeCursor()
+
+    def removeCursor():
+        sys.stdout.write("\033[?25l")
+
+    def updateGlobalFrame(x, y):
+        global GlobalFrame
+        GlobalFrame.size = [x, y]
+        # matrix = [[' ' for _ in range(y)] for _ in range(x)]
+        GlobalFrame.screen = [
+            [" " for y_ in range(GlobalFrame.size[1])]
+            for x_ in range(GlobalFrame.size[0])
+        ]
+        # GlobalFrame.clear()
+        GlobalFrame.removeCursor()
+        
+
+    def checkGlobalFrameSize():
+        size = shutil.get_terminal_size()
+        x, y = (
+            size.columns,
+            size.lines - 2,
+        )  # this margin of -2 is quite important to avoid overflow
+        if not (x == GlobalFrame.size[0] and y == GlobalFrame.size[1]):
+            GlobalFrame.updateGlobalFrame(x, y)
+
+
+
+class logger:
+    port = None
+    listener = None
+    conn = None
+    def init():
+# 1. Start listener on port 0 (OS assigns a guaranteed free port)
+        logger.listener = Listener(('localhost', 0), authkey=b'secret')
+        logger.port = logger.listener.address[1]
+    # 2. Launch Script B in a new console window, passing the port
+        subprocess.Popen(
+            [sys.executable, "logger.py", str(logger.port)],
+            creationflags=subprocess.CREATE_NEW_CONSOLE  # Windows pop-out terminal
+        )
+        logger.conn = logger.listener.accept()
+    def print(msg):
+        try:
+            logger.conn.send(msg)
+        except:
+            logger.init()
+            logger.print(msg)
 
 class input:
     currentKey = None
@@ -437,7 +493,7 @@ class Draw:
             Draw.insert(
                 5,
                 0,
-                Draw.box(GlobalFrame.size[0] - 9, GlobalFrame.size[1], "heavy"),
+                Draw.box(GlobalFrame.size[0] - 9, GlobalFrame.size[1]-1, "heavy"),
                 GlobalFrame.screen,
             )
 
@@ -445,7 +501,7 @@ class Draw:
             today = f"Date: {str(date.today())}"
             Draw.insert(
                 int((GlobalFrame.size[0] - len(today)) - 10),
-                int((GlobalFrame.size[1]) - 3),
+                int((GlobalFrame.size[1]) - 4),
                 list(today),
                 GlobalFrame.screen,
             )
@@ -454,7 +510,7 @@ class Draw:
             text = "go back"
             Draw.insert(
                 int(13),
-                int((GlobalFrame.size[1]) - 3),
+                int((GlobalFrame.size[1]) - 4),
                 list(text),
                 GlobalFrame.screen,
             )
@@ -571,7 +627,7 @@ class Page:
             Page.pageInitVar("historyPage", "backArr", Draw.selHorArrow(1, "<", False))
             Draw.insert(
                 int(10),
-                int((GlobalFrame.size[1]) - 3),
+                int((GlobalFrame.size[1]) - 4),
                 list(Locals["backArr"].print()),
                 GlobalFrame.screen,
             )
@@ -899,7 +955,7 @@ class Page:
                 )
                 Draw.insert(
                     int(10),
-                    int((GlobalFrame.size[1]) - 3),
+                    int(GlobalFrame.size[1] - 4),
                     list(Locals["backArr"].print()),
                     GlobalFrame.screen,
                 )
@@ -1063,7 +1119,7 @@ class Page:
         title = "( Insert log new data )"
         Draw.insert(
             int((GlobalFrame.size[0] - len(title)) / 2),
-            GlobalFrame.size[1] - 3,
+            GlobalFrame.size[1] - 4,
             list(title),
             GlobalFrame.screen,
         )
@@ -1189,12 +1245,7 @@ class Page:
 
     def screenSizeTest():
         text = list(str(GlobalFrame.size[0]) + ", " + str(GlobalFrame.size[1]))
-        Draw.insert(
-            5,
-            0,
-            Draw.box(GlobalFrame.size[0] - 9, GlobalFrame.size[1], "light"),
-            GlobalFrame.screen,
-        )
+        Draw.common.pageFrame()
         Draw.insert(
             int((GlobalFrame.size[0] - len(text)) / 2),
             int(GlobalFrame.size[1] / 2),
@@ -1203,40 +1254,6 @@ class Page:
         )
 
 
-class Frame:
-    # frame system:
-    def update():
-        Page.update()
-
-    def clear():
-        # Determine the correct command based on OS ('cls' for Windows, 'clear' for Linux/macOS)
-        command = "cls" if os.name == "nt" else "clear"
-        # Run the command safely without a manual shell wrapper
-        subprocess.run([command], shell=True)
-        Frame.removeCursor()
-
-    def removeCursor():
-        sys.stdout.write("\033[?25l")
-
-    def updateGlobalFrame(x, y):
-        global GlobalFrame
-        GlobalFrame.size = [x, y]
-        # matrix = [[' ' for _ in range(y)] for _ in range(x)]
-        GlobalFrame.screen = [
-            [" " for y_ in range(GlobalFrame.size[1])]
-            for x_ in range(GlobalFrame.size[0])
-        ]
-        Frame.update()
-        Frame.removeCursor()
-
-    def checkGlobalFrameSize():
-        size = shutil.get_terminal_size()
-        x, y = (
-            size.columns,
-            size.lines - 3,
-        )  # this margin of -2 is quite important to avoid overflow
-        if not (x == GlobalFrame.size[0] and y == GlobalFrame.size[1]):
-            Frame.updateGlobalFrame(x, y)
 
 
 def main():
@@ -1244,17 +1261,18 @@ def main():
     # clear_terminal()
     input.getKey()
     print("\033[H", end="")  # move this to the appropriate function later
-    print(RETRO_BRIGHT)
-    Frame.checkGlobalFrameSize()
-    Frame.update()
+    GlobalFrame.checkGlobalFrameSize()
+    GlobalFrame.update()
     print(Draw.stringify(GlobalFrame.screen))
     # page.screenTest()
 
     time.sleep(1 / MAX_FPS)
 
 
-Frame.clear()
 history.load()
+GlobalFrame.clear()
+print(RETRO_BRIGHT)
+
 
 while True:
     main()
